@@ -11,3 +11,7 @@ exports.generateAccessToken = function (object) {
 exports.verifyToken = function (token, callback) {
   return jwt.verify(token, process.env.APP_TOKEN_SECRET_KEY, callback);
 };
+
+exports.decodeToken = function (token) {
+  return jwt.decode(token);
+};
