@@ -19,7 +19,7 @@ exports.signup = async function (req, res) {
 
     await user.save();
 
-    res.status(StatusCodes.OK).send({ user });
+    res.status(StatusCodes.OK).send(user);
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
