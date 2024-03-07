@@ -10,12 +10,12 @@ exports.authByRoles = function (...roles) {
       return res.status(StatusCodes.UNAUTHORIZED).send("Token not found.");
     }
 
-    verifyToken(token, function (error, object) {
+    verifyToken(token, function (error, user) {
       if (error) {
         return res.status(StatusCodes.UNAUTHORIZED).send("Token is invalid.");
       }
 
-      if (!roles.includes(object.role)) {
+      if (!roles.includes(user.role)) {
         return res
           .status(StatusCodes.FORBIDDEN)
           .send("You are not allowed to access this route.");
