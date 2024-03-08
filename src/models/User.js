@@ -29,7 +29,7 @@ const schema = new mongoose.Schema(
       enum: ["admin", "user"],
     },
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" } }
+  { timestamps: true }
 );
 
 const model = mongoose.model("User", schema);
