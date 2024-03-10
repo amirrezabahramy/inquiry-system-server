@@ -1,9 +1,6 @@
 const router = require("express").Router();
 
-router.route("/").get((req, res) => {
-  res.send("Index route.");
-});
-
 router.use("/auth", require("./auth"));
+router.use("/tickets", require("./tickets"));
 
 module.exports = router;
