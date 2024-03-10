@@ -10,26 +10,61 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    from: {
+    sender: {
       type: mongoose.Schema.Types.ObjectId,
+      required: true,
       ref: "User",
     },
-    to: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    status: {
-      type: String,
-      enum: [
-        "accepted",
-        "rejected",
-        "additional-info-required",
-        "not-answered",
-      ],
-    },
+    receivers: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+          ref: "User",
+        },
+        receiverAnswer: {
+          type: String,
+          default: "not-answered",
+          required: true,
+          enum: [
+            "accepted",
+            "rejected",
+            "additional-info-required",
+            "not-answered",
+          ],
+        },
+        senderAnswer: {
+          type: String,
+          required: true,
+          default: "offer-in-progress",
+          enum: ["accepted", "rejected", "offer-in-progress"],
+        },
+        replies: [
+          {
+            from: {
+              type: mongoose.Schema.Types.ObjectId,
+              required: true,
+              ref: "User",
+            },
+            message: {
+              type: String,
+            },
+            createdAt: {
+              type: Date,
+              default: Date.now,
+            },
+          },
+        ],
+      },
+    ],
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" } }
+  { timestamps: true }
 );
+
+schema.pre("findOneAndUpdate", function (next) {
+  this.setOptions({ runValidators: true, new: true });
+  next();
+});
 
 const model = mongoose.model("Ticket", schema);
 
