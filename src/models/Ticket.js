@@ -15,7 +15,7 @@ const schema = new mongoose.Schema(
       required: true,
       ref: "User",
     },
-    receivers: [
+    receiverUsers: [
       {
         user: {
           type: mongoose.Schema.Types.ObjectId,

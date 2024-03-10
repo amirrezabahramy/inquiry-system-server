@@ -12,7 +12,7 @@ exports.getTickets = async function (req, res) {
     const user = decodeToken(token);
 
     const tickets = await Ticket.find({ sender: user._id }).select(
-      "-receivers"
+      "-receiverUsers"
     );
 
     res.status(StatusCodes.OK).send(tickets);
@@ -25,14 +25,14 @@ exports.getTickets = async function (req, res) {
 exports.getTicketReceivers = async function (req, res) {
   try {
     const ticket = await Ticket.findById(req.params.ticketId).select(
-      "-title -desc -sender -receivers.replies"
+      "-title -desc -sender -receiverUsers.replies"
     );
 
     if (!ticket) {
       throw new Error("Ticket not found.");
     }
 
-    res.status(StatusCodes.OK).send(ticket.receivers);
+    res.status(StatusCodes.OK).send(ticket.receiverUsers);
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
@@ -47,11 +47,11 @@ exports.getTicketReceiverReplies = async function (req, res) {
         },
       },
       {
-        $unwind: "$receivers",
+        $unwind: "$receiverUsers",
       },
       {
         $match: {
-          "receivers.user": mongoose.Types.ObjectId.createFromHexString(
+          "receiverUsers.user": mongoose.Types.ObjectId.createFromHexString(
             req.params.receiverUserId
           ),
         },
@@ -64,11 +64,11 @@ exports.getTicketReceiverReplies = async function (req, res) {
           sender: { $first: "$sender" },
           createdAt: { $first: "$createdAt" },
           updatedAt: { $first: "$updatedAt" },
-          receivers: { $push: "$receivers" },
+          receiverUsers: { $push: "$receiverUsers" },
         },
       },
     ]);
-    res.status(StatusCodes.OK).send(ticket.receivers[0].replies);
+    res.status(StatusCodes.OK).send(ticket.receiverUsers[0].replies);
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
@@ -92,7 +92,7 @@ exports.createAndBroadcastTicket = async function (req, res) {
       desc,
       from,
       sender: user,
-      receivers: users.map((user) => ({
+      receiverUsers: users.map((user) => ({
         user: user._id,
       })),
     });
@@ -137,25 +137,28 @@ exports.answerTicket = async function (req, res) {
       }
     }
 
-    const receiver = ticket.receivers.find(
-      (receiver) => receiver.user._id.toString() === receiverUserId
+    const receiverUser = ticket.receiverUsers.find(
+      (receiverUser) => receiverUser.user._id.toString() === receiverUserId
     );
 
-    if (!receiver) {
-      throw new Error("User is not a receiver of this ticket.");
+    if (!receiverUser) {
+      throw new Error("User is not a receiverUser of this ticket.");
     }
 
-    if (receiver.receiverAnswer === "not-answered" && user.role === "admin") {
-      throw new Error("You have to wait until receiver user replies.");
+    if (
+      receiverUser.receiverAnswer === "not-answered" &&
+      user.role === "admin"
+    ) {
+      throw new Error("You have to wait until receiverUser user replies.");
     }
 
-    if (finishAnswers.includes(receiver[answerToChange])) {
+    if (finishAnswers.includes(receiverUser[answerToChange])) {
       throw new Error("This conversation is closed.");
     }
 
-    receiver[answerToChange] = answer;
+    receiverUser[answerToChange] = answer;
     if (replyMessage) {
-      receiver.replies.push({
+      receiverUser.replies.push({
         from: user._id,
         message: replyMessage,
       });
