@@ -6,7 +6,7 @@ const { decodeToken } = require("../services/auth");
 const { default: mongoose } = require("mongoose");
 
 /** @type {import("express").RequestHandler} */
-exports.getTickets = async function (req, res) {
+exports.getTicketsList = async function (req, res) {
   try {
     const token = req.headers["authorization"].split(" ")[1];
     const user = decodeToken(token);

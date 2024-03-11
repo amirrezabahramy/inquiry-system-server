@@ -1,5 +1,5 @@
 const {
-  getTickets,
+  getTicketsList,
   getTicketReceiverUsers,
   getTicketReceiverReplies,
   createAndBroadcastTicket,
@@ -10,7 +10,7 @@ const { authByRoles } = require("../middlewares/auth");
 
 const router = require("express").Router();
 
-router.route("/").get(authByRoles("admin"), getTickets);
+router.route("/list").get(authByRoles("admin"), getTicketsList);
 router.route("/:ticketId/receiver-users").get(getTicketReceiverUsers);
 router
   .route("/:ticketId/answer")
