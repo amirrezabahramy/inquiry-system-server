@@ -22,7 +22,7 @@ const schema = new mongoose.Schema(
           required: true,
           ref: "User",
         },
-        receiverAnswer: {
+        receiverUserAnswer: {
           type: String,
           default: "not-answered",
           required: true,
