@@ -1,6 +1,6 @@
 const {
   getTickets,
-  getTicketReceivers,
+  getTicketReceiverUsers,
   getTicketReceiverReplies,
   createAndBroadcastTicket,
   answerTicket,
@@ -11,7 +11,7 @@ const { authByRoles } = require("../middlewares/auth");
 const router = require("express").Router();
 
 router.route("/").get(authByRoles("admin"), getTickets);
-router.route("/:ticketId/receiverUsers").get(getTicketReceivers);
+router.route("/:ticketId/receiverUsers").get(getTicketReceiverUsers);
 router
   .route("/:ticketId/answer")
   .patch(authByRoles("admin", "user"), answerTicket);

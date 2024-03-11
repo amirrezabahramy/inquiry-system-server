@@ -22,11 +22,11 @@ exports.getTickets = async function (req, res) {
 };
 
 /** @type {import("express").RequestHandler} */
-exports.getTicketReceivers = async function (req, res) {
+exports.getTicketReceiverUsers = async function (req, res) {
   try {
-    const ticket = await Ticket.findById(req.params.ticketId).select(
-      "-title -desc -sender -receiverUsers.replies"
-    );
+    const ticket = await Ticket.findById(req.params.ticketId)
+      .select("-title -desc -sender -receiverUsers.replies")
+      .populate("receiverUsers.user");
 
     if (!ticket) {
       throw new Error("Ticket not found.");
@@ -37,6 +37,7 @@ exports.getTicketReceivers = async function (req, res) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
 };
+
 /** @type {import("express").RequestHandler} */
 exports.getTicketReceiverReplies = async function (req, res) {
   try {
