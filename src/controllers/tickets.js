@@ -74,6 +74,7 @@ exports.getTicketReceiverReplies = async function (req, res) {
               in: {
                 message: "$$reply.message",
                 from: {
+                  _id: { $arrayElemAt: ["$from._id", 0] },
                   firstName: { $arrayElemAt: ["$from.firstName", 0] },
                   lastName: { $arrayElemAt: ["$from.lastName", 0] },
                 },
