@@ -12,7 +12,7 @@ exports.getTickets = async function (req, res) {
     const user = decodeToken(token);
 
     const tickets = await Ticket.find({ sender: user._id }).select(
-      "-receiverUsers"
+      "-receiverUsers -sender"
     );
 
     res.status(StatusCodes.OK).send(tickets);
