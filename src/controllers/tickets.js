@@ -26,7 +26,7 @@ exports.getTicketReceiverUsers = async function (req, res) {
   try {
     const ticket = await Ticket.findById(req.params.ticketId)
       .select("-title -desc -sender -receiverUsers.replies")
-      .populate("receiverUsers.user");
+      .populate("receiverUsers.user", "-password");
 
     if (!ticket) {
       throw new Error("Ticket not found.");
@@ -41,6 +41,17 @@ exports.getTicketReceiverUsers = async function (req, res) {
 /** @type {import("express").RequestHandler} */
 exports.getTicketReceiverReplies = async function (req, res) {
   try {
+    const token = req.headers["authorization"].split(" ")[1];
+    const user = decodeToken(token);
+
+    let answerToCheck = "receiverUserAnswer";
+    let finishAnswers = ["rejected"];
+
+    if (user.role === "admin") {
+      finishAnswers.push("accepted");
+      answerToCheck = "senderAnswer";
+    }
+
     const [ticket] = await Ticket.aggregate([
       {
         $match: {
@@ -69,8 +80,20 @@ exports.getTicketReceiverReplies = async function (req, res) {
         },
       },
     ]);
-    console.log(ticket);
-    res.status(StatusCodes.OK).send(ticket.receiverUsers[0].replies);
+
+    const receiverUser = ticket.receiverUsers[0];
+
+    const canReplyFirst =
+      user.role === "admin"
+        ? receiverUser.receiverUserAnswer !== "not-answered"
+        : true;
+
+    const canReply =
+      canReplyFirst && !finishAnswers.includes(receiverUser[answerToCheck]);
+
+    res
+      .status(StatusCodes.OK)
+      .send({ canReply, replies: receiverUser.replies });
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
@@ -146,7 +169,7 @@ exports.answerTicket = async function (req, res) {
     );
 
     if (!receiverUser) {
-      throw new Error("User is not a receiverUser of this ticket.");
+      throw new Error("User is not a receiver of this ticket.");
     }
 
     if (
