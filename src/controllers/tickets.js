@@ -104,7 +104,9 @@ exports.createAndBroadcastTicket = async function (req, res) {
 
     await ticket.save();
 
-    res.status(StatusCodes.CREATED).send(ticket);
+    res
+      .status(StatusCodes.CREATED)
+      .send("Ticket added and broadcasted successfully.");
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
@@ -157,6 +159,10 @@ exports.answerTicket = async function (req, res) {
       throw new Error("This conversation is closed.");
     }
 
+    if (receiverUser[answerToChange] === answer) {
+      throw new Error("This answer is already submitted.");
+    }
+
     receiverUser[answerToChange] = answer;
     if (replyMessage) {
       receiverUser.replies.push({
@@ -167,7 +173,7 @@ exports.answerTicket = async function (req, res) {
 
     await ticket.save();
 
-    res.status(StatusCodes.OK).send(ticket);
+    res.status(StatusCodes.OK).send("Submitted answer successfully.");
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
