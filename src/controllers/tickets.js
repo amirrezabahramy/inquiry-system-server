@@ -186,7 +186,11 @@ exports.answerTicket = async function (req, res) {
       throw new Error("This conversation is closed.");
     }
 
-    if (receiverUser[answerToChange] === answer) {
+    const progressAnswers = ["offer-in-progress", "additional-info-required"];
+    if (
+      !progressAnswers.includes(receiverUser[answerToChange]) &&
+      receiverUser[answerToChange] === answer
+    ) {
       throw new Error("This answer is already submitted.");
     }
 
