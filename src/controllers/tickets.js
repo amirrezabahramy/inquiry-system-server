@@ -58,6 +58,31 @@ exports.getTicketReceiverReplies = async function (req, res) {
         },
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "receiverUsers.replies.from",
+          foreignField: "_id",
+          as: "from",
+        },
+      },
+      {
+        $addFields: {
+          "receiverUsers.replies": {
+            $map: {
+              input: "$receiverUsers.replies",
+              as: "reply",
+              in: {
+                message: "$$reply.message",
+                from: {
+                  firstName: { $arrayElemAt: ["$from.firstName", 0] },
+                  lastName: { $arrayElemAt: ["$from.lastName", 0] },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
         $group: {
           _id: "$_id",
           title: { $first: "$title" },
@@ -69,6 +94,7 @@ exports.getTicketReceiverReplies = async function (req, res) {
         },
       },
     ]);
+    console.log(ticket);
     res.status(StatusCodes.OK).send(ticket.receiverUsers[0].replies);
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
