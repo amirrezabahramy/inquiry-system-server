@@ -58,32 +58,6 @@ exports.getTicketReceiverReplies = async function (req, res) {
         },
       },
       {
-        $lookup: {
-          from: "users",
-          localField: "receiverUsers.replies.from",
-          foreignField: "_id",
-          as: "from",
-        },
-      },
-      {
-        $addFields: {
-          "receiverUsers.replies": {
-            $map: {
-              input: "$receiverUsers.replies",
-              as: "reply",
-              in: {
-                message: "$$reply.message",
-                from: {
-                  _id: { $arrayElemAt: ["$from._id", 0] },
-                  firstName: { $arrayElemAt: ["$from.firstName", 0] },
-                  lastName: { $arrayElemAt: ["$from.lastName", 0] },
-                },
-              },
-            },
-          },
-        },
-      },
-      {
         $group: {
           _id: "$_id",
           title: { $first: "$title" },
@@ -154,7 +128,7 @@ exports.answerTicket = async function (req, res) {
     }
 
     let receiverUserId = user._id;
-    let answerToChange = "receiverAnswer";
+    let answerToChange = "receiverUserAnswer";
     let finishAnswers = ["rejected"];
 
     if (user.role === "admin") {
@@ -176,7 +150,7 @@ exports.answerTicket = async function (req, res) {
     }
 
     if (
-      receiverUser.receiverAnswer === "not-answered" &&
+      receiverUser.receiverUserAnswer === "not-answered" &&
       user.role === "admin"
     ) {
       throw new Error("You have to wait until receiverUser user replies.");
