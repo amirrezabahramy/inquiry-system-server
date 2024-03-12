@@ -50,13 +50,9 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
   try {
     const user = req.user;
 
-    let answerToCheck = "receiverUserAnswer";
-    let finishAnswers = ["rejected"];
     let receiverUserId = user._id;
 
     if (user.role === "admin") {
-      finishAnswers.push("accepted");
-      answerToCheck = "senderAnswer";
       receiverUserId = req.params.receiverUserId;
     }
 
@@ -108,9 +104,10 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
       replyStatus.reason = "wait-for-first-reply";
     }
 
-    const isConversationClosed = finishAnswers.includes(
-      receiverUser[answerToCheck]
-    );
+    const isConversationClosed =
+      receiverUser.senderAnswer === "rejected" ||
+      receiverUser.senderAnswer === "accepted" ||
+      receiverUser.receiverUserAnswer === "rejected";
 
     if (isConversationClosed) {
       replyStatus.value = false;
@@ -178,13 +175,11 @@ exports.answerTicket = async function (req, res) {
 
     let receiverUserId = user._id;
     let answerToChange = "receiverUserAnswer";
-    let finishAnswers = ["rejected"];
 
     if (user.role === "admin") {
       if (req.body.receiverUserId) {
         receiverUserId = req.body.receiverUserId;
         answerToChange = "senderAnswer";
-        finishAnswers.push("accepted");
       } else {
         throw new Error("Fields required: receiverUserId");
       }
@@ -205,7 +200,11 @@ exports.answerTicket = async function (req, res) {
       throw new Error("You have to wait until receiverUser user replies.");
     }
 
-    if (finishAnswers.includes(receiverUser[answerToChange])) {
+    if (
+      receiverUser.senderAnswer === "rejected" ||
+      receiverUser.senderAnswer === "accepted" ||
+      receiverUser.receiverUserAnswer === "rejected"
+    ) {
       throw new Error("This conversation is closed.");
     }
 
