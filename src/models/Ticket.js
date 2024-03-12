@@ -15,48 +15,53 @@ const schema = new mongoose.Schema(
       required: true,
       ref: "User",
     },
-    receiverUsers: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-          ref: "User",
-        },
-        receiverUserAnswer: {
-          type: String,
-          default: "not-answered",
-          required: true,
-          enum: [
-            "accepted",
-            "rejected",
-            "additional-info-required",
-            "not-answered",
+    receiverUsers: {
+      type: [
+        {
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: "User",
+          },
+          receiverUserAnswer: {
+            type: String,
+            default: "not-answered",
+            required: true,
+            enum: [
+              "accepted",
+              "rejected",
+              "additional-info-required",
+              "not-answered",
+            ],
+          },
+          senderAnswer: {
+            type: String,
+            required: true,
+            default: "offer-in-progress",
+            enum: ["accepted", "rejected", "offer-in-progress"],
+          },
+          replies: [
+            {
+              from: {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true,
+                ref: "User",
+              },
+              message: {
+                type: String,
+              },
+              createdAt: {
+                type: Date,
+                default: Date.now,
+              },
+            },
           ],
         },
-        senderAnswer: {
-          type: String,
-          required: true,
-          default: "offer-in-progress",
-          enum: ["accepted", "rejected", "offer-in-progress"],
-        },
-        replies: [
-          {
-            from: {
-              type: mongoose.Schema.Types.ObjectId,
-              required: true,
-              ref: "User",
-            },
-            message: {
-              type: String,
-            },
-            createdAt: {
-              type: Date,
-              default: Date.now,
-            },
-          },
-        ],
+      ],
+      validate: function (value) {
+        return Array.isArray(value) && value.length > 0;
       },
-    ],
+    },
   },
   { timestamps: true }
 );
