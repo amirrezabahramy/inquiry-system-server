@@ -8,12 +8,19 @@ const { default: mongoose } = require("mongoose");
 /** @type {import("express").RequestHandler} */
 exports.getTicketsList = async function (req, res) {
   try {
-    const token = req.headers["authorization"].split(" ")[1];
-    const user = decodeToken(token);
+    const user = req.user;
 
-    const tickets = await Ticket.find({ sender: user._id }).select(
-      "-receiverUsers -sender"
-    );
+    let tickets;
+
+    if (user.role === "admin") {
+      tickets = await Ticket.find({ sender: user._id }).select(
+        "-receiverUsers -sender"
+      );
+    } else {
+      tickets = await Ticket.find({ "receiverUsers.user": user._id })
+        .select("-receiverUsers")
+        .populate("sender", "firstName lastName username");
+    }
 
     res.status(StatusCodes.OK).send(tickets);
   } catch (error) {
@@ -39,17 +46,18 @@ exports.getTicketReceiverUsers = async function (req, res) {
 };
 
 /** @type {import("express").RequestHandler} */
-exports.getTicketReceiverReplies = async function (req, res) {
+exports.getTicketReceiverUserReplies = async function (req, res) {
   try {
-    const token = req.headers["authorization"].split(" ")[1];
-    const user = decodeToken(token);
+    const user = req.user;
 
     let answerToCheck = "receiverUserAnswer";
     let finishAnswers = ["rejected"];
+    let receiverUserId = user._id;
 
     if (user.role === "admin") {
       finishAnswers.push("accepted");
       answerToCheck = "senderAnswer";
+      receiverUserId = req.params.receiverUserId;
     }
 
     const [ticket] = await Ticket.aggregate([
@@ -63,9 +71,8 @@ exports.getTicketReceiverReplies = async function (req, res) {
       },
       {
         $match: {
-          "receiverUsers.user": mongoose.Types.ObjectId.createFromHexString(
-            req.params.receiverUserId
-          ),
+          "receiverUsers.user":
+            mongoose.Types.ObjectId.createFromHexString(receiverUserId),
         },
       },
       {
@@ -80,6 +87,10 @@ exports.getTicketReceiverReplies = async function (req, res) {
         },
       },
     ]);
+
+    if (!ticket) {
+      throw new Error("Ticket not found.");
+    }
 
     const receiverUser = ticket.receiverUsers[0];
 
@@ -120,8 +131,7 @@ exports.createAndBroadcastTicket = async function (req, res) {
   try {
     const { title, desc, from, receiverUsersIds } = req.body;
 
-    const token = req.headers["authorization"].split(" ")[1];
-    const user = decodeToken(token);
+    const user = req.user;
 
     const users = await User.find({
       _id: { $in: receiverUsersIds },
