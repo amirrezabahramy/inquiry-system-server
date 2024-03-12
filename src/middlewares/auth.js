@@ -1,8 +1,8 @@
 const { StatusCodes } = require("http-status-codes");
 const { verifyToken } = require("../services/auth");
 
+/** @type {import("express").RequestHandler} */
 exports.authByRoles = function (...roles) {
-  /** @type {import("express").RequestHandler} */
   return function (req, res, next) {
     const token = req.headers["authorization"]?.split(" ")[1] || "";
 
