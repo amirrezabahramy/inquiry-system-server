@@ -83,17 +83,33 @@ exports.getTicketReceiverReplies = async function (req, res) {
 
     const receiverUser = ticket.receiverUsers[0];
 
-    const canReplyFirst =
+    let replyStatus = {
+      value: true,
+    };
+
+    const canReplyFirstMessage =
       user.role === "admin"
         ? receiverUser.receiverUserAnswer !== "not-answered"
         : true;
 
-    const canReply =
-      canReplyFirst && !finishAnswers.includes(receiverUser[answerToCheck]);
+    if (!canReplyFirstMessage) {
+      replyStatus.value = false;
+      replyStatus.reason = "wait-for-first-reply";
+    }
 
-    res
-      .status(StatusCodes.OK)
-      .send({ canReply, replies: receiverUser.replies });
+    const isConversationClosed = finishAnswers.includes(
+      receiverUser[answerToCheck]
+    );
+
+    if (isConversationClosed) {
+      replyStatus.value = false;
+      replyStatus.reason = "conversation-is-closed";
+    }
+
+    res.status(StatusCodes.OK).send({
+      replyStatus,
+      replies: receiverUser.replies,
+    });
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
