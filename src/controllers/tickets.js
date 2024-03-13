@@ -6,14 +6,15 @@ const { decodeToken } = require("../services/auth");
 const { default: mongoose } = require("mongoose");
 
 /** @type {import("express").RequestHandler} */
-exports.getTicketsList = async function (req, res) {
+exports.getTickets = async function (req, res) {
   try {
     const user = req.user;
+    const clientFilter = req.clientFilter;
 
     let tickets;
 
     if (user.role === "admin") {
-      tickets = await Ticket.find({ sender: user._id }).select(
+      tickets = await Ticket.find({ ...clientFilter, sender: user._id }).select(
         "-receiverUsers -sender"
       );
     } else {
@@ -31,7 +32,7 @@ exports.getTicketsList = async function (req, res) {
 /** @type {import("express").RequestHandler} */
 exports.getTicketReceiverUsers = async function (req, res) {
   try {
-    const ticket = await Ticket.findById(req.params.ticketId)
+    const ticket = await Ticket.findOne({ _id: req.params.ticketId })
       .select("-title -desc -sender -receiverUsers.replies")
       .populate("receiverUsers.user", "-password");
 
@@ -62,9 +63,7 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
           _id: mongoose.Types.ObjectId.createFromHexString(req.params.ticketId),
         },
       },
-      {
-        $unwind: "$receiverUsers",
-      },
+      { $unwind: "$receiverUsers" },
       {
         $match: {
           "receiverUsers.user":
@@ -93,6 +92,14 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
     let replyStatus = {
       value: true,
     };
+
+    const canOnlyRejectOrContinue =
+      user.role === "admin" &&
+      receiverUser.receiverUserAnswer === "additional-info-required";
+
+    if (canOnlyRejectOrContinue) {
+      replyStatus.value = "limited";
+    }
 
     const canReplyFirstMessage =
       user.role === "admin"
@@ -197,7 +204,17 @@ exports.answerTicket = async function (req, res) {
       receiverUser.receiverUserAnswer === "not-answered" &&
       user.role === "admin"
     ) {
-      throw new Error("You have to wait until receiverUser user replies.");
+      throw new Error("You have to wait until receiver user user replies.");
+    }
+
+    if (
+      receiverUser.receiverUserAnswer === "additional-info-required" &&
+      user.role === "admin" &&
+      answer === "accepted"
+    ) {
+      throw new Error(
+        "Admins can't accept requests until receiver users accept."
+      );
     }
 
     if (

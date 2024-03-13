@@ -1,5 +1,5 @@
 const {
-  getTicketsList,
+  getTickets,
   getTicketReceiverUsers,
   getTicketReceiverUserReplies,
   createAndBroadcastTicket,
@@ -7,13 +7,18 @@ const {
 } = require("../controllers/tickets");
 
 const { authByRoles } = require("../middlewares/auth");
-const { setUser } = require("../middlewares/basic");
+const { setUser, applyClientFilter } = require("../middlewares/basic");
 
 const router = require("express").Router();
 
 router
-  .route("/list")
-  .get(authByRoles("admin", "user"), setUser, getTicketsList);
+  .route("/")
+  .get(
+    authByRoles("admin", "user"),
+    setUser,
+    applyClientFilter("title", "desc"),
+    getTickets
+  );
 
 router
   .route("/:ticketId/receiver-users")
