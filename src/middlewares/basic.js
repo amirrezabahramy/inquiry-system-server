@@ -7,3 +7,24 @@ exports.setUser = function (req, res, next) {
   req.user = user;
   next();
 };
+
+exports.applyClientFilter = function (...keys) {
+  /** @type {import("express").RequestHandler} */
+  return function (req, res, next) {
+    const { search } = req.query;
+
+    const clientFilter = search
+      ? {
+          $or: keys.map((field) => ({
+            [field]: {
+              $regex: search,
+              $options: "i",
+            },
+          })),
+        }
+      : {};
+
+    req.clientFilter = clientFilter;
+    next();
+  };
+};
