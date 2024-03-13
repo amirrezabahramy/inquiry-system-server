@@ -6,19 +6,9 @@ const User = require("../models/User");
 /** @type {import("express").RequestHandler} */
 exports.usersOptions = async function (req, res) {
   try {
-    const { search } = req.query;
-    const filter = search
-      ? {
-          $or: ["username", "firstName", "lastName"].map((field) => ({
-            [field]: {
-              $regex: search,
-              $options: "i",
-            },
-          })),
-        }
-      : {};
+    const clientFilter = req.clientFilter;
 
-    const users = await User.find({ ...filter, role: "user" })
+    const users = await User.find({ ...clientFilter, role: "user" })
       .limit(defaultLimit)
       .select("firstName lastName");
 
