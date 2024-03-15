@@ -72,6 +72,7 @@ exports.getInquiries = async function (req, res) {
             "contract.contractStatus": 1,
             "contract.senderAnswer": 1,
             "contract.receiverUserAnswer": 1,
+            createdAt: 1,
           },
         },
       ]);
