@@ -1,24 +1,25 @@
 const { StatusCodes } = require("http-status-codes");
 
 const User = require("../models/User");
-const Ticket = require("../models/Ticket");
+const Inquiry = require("../models/Inquiry");
 const { decodeToken } = require("../services/auth");
 const { default: mongoose } = require("mongoose");
 
 /** @type {import("express").RequestHandler} */
-exports.getTickets = async function (req, res) {
+exports.getInquiries = async function (req, res) {
   try {
     const user = req.user;
     const clientFilter = req.clientFilter;
 
-    let tickets;
+    let inquiries;
 
     if (user.role === "admin") {
-      tickets = await Ticket.find({ ...clientFilter, sender: user._id }).select(
-        "-receiverUsers -sender"
-      );
+      inquiries = await Inquiry.find({
+        ...clientFilter,
+        sender: user._id,
+      }).select("-receiverUsers -sender");
     } else {
-      tickets = await Ticket.aggregate([
+      inquiries = await Inquiry.aggregate([
         {
           $match: {
             ...clientFilter,
@@ -76,31 +77,31 @@ exports.getTickets = async function (req, res) {
       ]);
     }
 
-    res.status(StatusCodes.OK).send(tickets);
+    res.status(StatusCodes.OK).send(inquiries);
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
 };
 
 /** @type {import("express").RequestHandler} */
-exports.getTicketReceiverUsers = async function (req, res) {
+exports.getInquiryReceiverUsers = async function (req, res) {
   try {
-    const ticket = await Ticket.findOne({ _id: req.params.ticketId })
+    const inquiry = await Inquiry.findOne({ _id: req.params.inquiryId })
       .select("-title -desc -sender -receiverUsers.replies")
       .populate("receiverUsers.user", "-password");
 
-    if (!ticket) {
-      throw new Error("Ticket not found.");
+    if (!inquiry) {
+      throw new Error("Inquiry not found.");
     }
 
-    res.status(StatusCodes.OK).send(ticket.receiverUsers);
+    res.status(StatusCodes.OK).send(inquiry.receiverUsers);
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
 };
 
 /** @type {import("express").RequestHandler} */
-exports.getTicketReceiverUserReplies = async function (req, res) {
+exports.getInquiryReceiverUserReplies = async function (req, res) {
   try {
     const user = req.user;
 
@@ -110,10 +111,12 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
       receiverUserId = req.params.receiverUserId;
     }
 
-    const [ticket] = await Ticket.aggregate([
+    const [inquiry] = await Inquiry.aggregate([
       {
         $match: {
-          _id: mongoose.Types.ObjectId.createFromHexString(req.params.ticketId),
+          _id: mongoose.Types.ObjectId.createFromHexString(
+            req.params.inquiryId
+          ),
         },
       },
       { $unwind: "$receiverUsers" },
@@ -136,11 +139,11 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
       },
     ]);
 
-    if (!ticket) {
-      throw new Error("Ticket not found.");
+    if (!inquiry) {
+      throw new Error("Inquiry not found.");
     }
 
-    const receiverUser = ticket.receiverUsers[0];
+    const receiverUser = inquiry.receiverUsers[0];
 
     let replyStatus = {
       value: true,
@@ -184,7 +187,7 @@ exports.getTicketReceiverUserReplies = async function (req, res) {
 };
 
 /** @type {import("express").RequestHandler} */
-exports.createAndBroadcastTicket = async function (req, res) {
+exports.enquiry = async function (req, res) {
   try {
     const { title, desc, from, receiverUsersIds } = req.body;
 
@@ -195,7 +198,7 @@ exports.createAndBroadcastTicket = async function (req, res) {
       role: "user",
     }).select("_id");
 
-    const ticket = new Ticket({
+    const inquiry = new Inquiry({
       title,
       desc,
       from,
@@ -206,31 +209,31 @@ exports.createAndBroadcastTicket = async function (req, res) {
     });
 
     if (receiverUsersIds.includes(user._id)) {
-      throw new Error("You can't broadcast ticket to yourself.");
+      throw new Error("You can't broadcast inquiry to yourself.");
     }
 
-    await ticket.save();
+    await inquiry.save();
 
     res
       .status(StatusCodes.CREATED)
-      .send("Ticket added and broadcasted successfully.");
+      .send("Inquiry added and broadcasted successfully.");
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
 };
 
 /** @type {import("express").RequestHandler} */
-exports.answerTicket = async function (req, res) {
+exports.answerInquiry = async function (req, res) {
   try {
     const { replyMessage, answer } = req.body;
 
     const token = req.headers["authorization"].split(" ")[1];
     const user = decodeToken(token);
 
-    const ticket = await Ticket.findById(req.params.ticketId);
+    const inquiry = await Inquiry.findById(req.params.inquiryId);
 
-    if (!ticket) {
-      throw new Error("Ticket not found.");
+    if (!inquiry) {
+      throw new Error("Inquiry not found.");
     }
 
     let receiverUserId = user._id;
@@ -245,12 +248,12 @@ exports.answerTicket = async function (req, res) {
       }
     }
 
-    const receiverUser = ticket.receiverUsers.find(
+    const receiverUser = inquiry.receiverUsers.find(
       (receiverUser) => receiverUser.user._id.toString() === receiverUserId
     );
 
     if (!receiverUser) {
-      throw new Error("User is not a receiver of this ticket.");
+      throw new Error("User is not a receiver of this inquiry.");
     }
 
     if (
@@ -294,7 +297,7 @@ exports.answerTicket = async function (req, res) {
       });
     }
 
-    await ticket.save();
+    await inquiry.save();
 
     res.status(StatusCodes.OK).send("Submitted answer successfully.");
   } catch (error) {

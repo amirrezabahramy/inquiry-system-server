@@ -94,6 +94,6 @@ schema.pre("findOneAndUpdate", function (next) {
   next();
 });
 
-const model = mongoose.model("Ticket", schema);
+const model = mongoose.model("Inquiry", schema);
 
 module.exports = model;

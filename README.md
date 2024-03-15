@@ -1,1 +1,1 @@
-# ticketing-system-server
+# inquiry-system-server
