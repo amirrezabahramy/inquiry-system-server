@@ -18,9 +18,62 @@ exports.getTickets = async function (req, res) {
         "-receiverUsers -sender"
       );
     } else {
-      tickets = await Ticket.find({ "receiverUsers.user": user._id })
-        .select("-receiverUsers")
-        .populate("sender", "firstName lastName username");
+      tickets = await Ticket.aggregate([
+        {
+          $match: {
+            ...clientFilter,
+            "receiverUsers.user": mongoose.Types.ObjectId.createFromHexString(
+              user._id
+            ),
+          },
+        },
+        {
+          $addFields: {
+            receiverUsers: {
+              $filter: {
+                input: "$receiverUsers",
+                as: "receiverUser",
+                cond: {
+                  $eq: [
+                    "$$receiverUser.user",
+                    mongoose.Types.ObjectId.createFromHexString(user._id),
+                  ],
+                },
+              },
+            },
+          },
+        },
+        {
+          $addFields: {
+            contract: { $arrayElemAt: ["$receiverUsers", 0] },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "sender",
+            foreignField: "_id",
+            as: "sender",
+          },
+        },
+        {
+          $addFields: {
+            sender: { $arrayElemAt: ["$sender", 0] },
+          },
+        },
+        {
+          $project: {
+            title: 1,
+            desc: 1,
+            "sender.firstName": 1,
+            "sender.lastName": 1,
+            "sender.username": 1,
+            "contract.contractStatus": 1,
+            "contract.senderAnswer": 1,
+            "contract.receiverUserAnswer": 1,
+          },
+        },
+      ]);
     }
 
     res.status(StatusCodes.OK).send(tickets);
