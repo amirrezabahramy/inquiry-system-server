@@ -40,6 +40,10 @@ const schema = new mongoose.Schema(
             default: "offer-in-progress",
             enum: ["accepted", "rejected", "offer-in-progress"],
           },
+          contractStatus: {
+            type: String,
+            enum: ["successful", "unsuccessful", "in-progress"],
+          },
           replies: [
             {
               from: {
@@ -65,6 +69,25 @@ const schema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+schema.pre("save", function (next) {
+  this.receiverUsers.forEach((receiverUser) => {
+    if (this.isModified("receiverUsers") || receiverUser.isModified()) {
+      if (receiverUser.senderAnswer === "accepted") {
+        receiverUser.contractStatus = "successful";
+      } else if (
+        receiverUser.senderAnswer === "rejected" ||
+        receiverUser.receiverUserAnswer === "rejected"
+      ) {
+        receiverUser.contractStatus = "unsuccessful";
+      } else {
+        receiverUser.contractStatus = "in-progress";
+      }
+    }
+  });
+
+  next();
+});
 
 schema.pre("findOneAndUpdate", function (next) {
   this.setOptions({ runValidators: true, new: true });
