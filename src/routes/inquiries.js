@@ -16,13 +16,28 @@ router
   .get(
     authByRoles("admin", "user"),
     setUser,
-    applyClientFilter("title", "desc"),
+    applyClientFilter(
+      "title",
+      "desc",
+      "segmentName",
+      "price",
+      "count",
+      "deliveryPlace"
+    ),
     getInquiries
   );
 
 router
   .route("/:inquiryId/receiver-users")
-  .get(authByRoles("admin"), getInquiryReceiverUsers);
+  .get(
+    authByRoles("admin"),
+    applyClientFilter(
+      "receiverUsers.user.firstName",
+      "receiverUsers.user.lastName",
+      "receiverUsers.user.username"
+    ),
+    getInquiryReceiverUsers
+  );
 
 router
   .route("/:inquiryId/receiver-users/:receiverUserId/replies")
