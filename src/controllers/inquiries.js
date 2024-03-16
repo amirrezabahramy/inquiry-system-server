@@ -168,6 +168,14 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
       replyStatus.reason = "wait-for-first-reply";
     }
 
+    const isWaitingForAdminResponse =
+      user.role === "user" && receiverUser.receiverUserAnswer === "accepted";
+
+    if (isWaitingForAdminResponse) {
+      replyStatus.value = false;
+      replyStatus.reason = "wait-for-admin-response";
+    }
+
     const isConversationClosed =
       receiverUser.senderAnswer === "rejected" ||
       receiverUser.senderAnswer === "accepted" ||
@@ -271,6 +279,15 @@ exports.answerInquiry = async function (req, res) {
     ) {
       throw new Error(
         "Admins can't accept requests until receiver users accept."
+      );
+    }
+
+    if (
+      user.role === "user" &&
+      receiverUser.receiverUserAnswer === "accepted"
+    ) {
+      throw new Error(
+        "This conversation is closed for you. Wait for admin's final response."
       );
     }
 
