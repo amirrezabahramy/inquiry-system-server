@@ -10,6 +10,34 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    segmentName: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    count: {
+      type: Number,
+      required: true,
+    },
+    producer: {
+      type: String,
+      required: true,
+    },
+    deliveryDate: {
+      type: Date,
+      required: true,
+    },
+    deliveryPlace: {
+      type: String,
+      required: true,
+    },
+    uniqueId: {
+      type: String,
+    },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -73,6 +101,11 @@ const schema = new mongoose.Schema(
 );
 
 schema.pre("save", function (next) {
+  if (this.isModified("segmentName") || this.isModified("count")) {
+    const uniqueId = this.segmentName + "-" + this.count;
+    this.uniqueId = uniqueId;
+  }
+
   this.receiverUsers.forEach((receiverUser) => {
     if (this.isModified("receiverUsers") || receiverUser.isModified()) {
       if (receiverUser.senderAnswer === "accepted") {

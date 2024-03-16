@@ -66,6 +66,12 @@ exports.getInquiries = async function (req, res) {
           $project: {
             title: 1,
             desc: 1,
+            segmentName: 1,
+            price: 1,
+            count: 1,
+            deliveryDate: 1,
+            deliveryPlace: 1,
+            uniqueId: 1,
             "sender.firstName": 1,
             "sender.lastName": 1,
             "sender.username": 1,
@@ -198,7 +204,18 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
 /** @type {import("express").RequestHandler} */
 exports.enquiry = async function (req, res) {
   try {
-    const { title, desc, from, receiverUsersIds } = req.body;
+    const {
+      title,
+      desc,
+      segmentName,
+      price,
+      count,
+      producer,
+      deliveryDate,
+      deliveryPlace,
+      from,
+      receiverUsersIds,
+    } = req.body;
 
     const user = req.user;
 
@@ -210,6 +227,12 @@ exports.enquiry = async function (req, res) {
     const inquiry = new Inquiry({
       title,
       desc,
+      segmentName,
+      price,
+      count,
+      producer,
+      deliveryDate,
+      deliveryPlace,
       from,
       sender: user,
       receiverUsers: users.map((user) => ({
@@ -218,7 +241,7 @@ exports.enquiry = async function (req, res) {
     });
 
     if (receiverUsersIds.includes(user._id)) {
-      throw new Error("You can't broadcast inquiry to yourself.");
+      throw new Error("You can't enquiry to yourself.");
     }
 
     await inquiry.save();
