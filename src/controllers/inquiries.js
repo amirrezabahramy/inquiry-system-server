@@ -93,9 +93,60 @@ exports.getInquiries = async function (req, res) {
 /** @type {import("express").RequestHandler} */
 exports.getInquiryReceiverUsers = async function (req, res) {
   try {
-    const inquiry = await Inquiry.findOne({ _id: req.params.inquiryId })
-      .select("-title -desc -sender -receiverUsers.replies")
-      .populate("receiverUsers.user", "-password");
+    const clientFilter = req.clientFilter;
+    console.log(clientFilter);
+
+    // const inquiry = await Inquiry.findOne({ _id: req.params.inquiryId })
+    //   .select("-title -desc -sender -receiverUsers.replies")
+    //   .populate("receiverUsers.user", "-password");
+
+    const [inquiry] = await Inquiry.aggregate([
+      {
+        $match: {
+          _id: mongoose.Types.ObjectId.createFromHexString(
+            req.params.inquiryId
+          ),
+        },
+      },
+      {
+        $unwind: "$receiverUsers",
+      },
+      {
+        $lookup: {
+          from: "users",
+          foreignField: "_id",
+          localField: "receiverUsers.user",
+          as: "receiverUsers.user",
+        },
+      },
+      {
+        $unwind: "$receiverUsers.user",
+      },
+      {
+        $match: clientFilter,
+      },
+      {
+        $group: {
+          _id: "$_id",
+          receiverUsers: { $push: "$receiverUsers" },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: ["$$ROOT", { receiverUsers: "$receiverUsers" }],
+          },
+        },
+      },
+      {
+        $project: {
+          "receiverUsers.replies": 0,
+          "receiverUsers.user.password": 0,
+        },
+      },
+    ]).limit(1);
+
+    console.log(inquiry);
 
     if (!inquiry) {
       throw new Error("Inquiry not found.");
@@ -248,7 +299,7 @@ exports.enquiry = async function (req, res) {
 
     res
       .status(StatusCodes.CREATED)
-      .send("Inquiry added and broadcasted successfully.");
+      .send("Inquiry added and sent successfully.");
   } catch (error) {
     res.status(StatusCodes.BAD_REQUEST).send(error.message);
   }
