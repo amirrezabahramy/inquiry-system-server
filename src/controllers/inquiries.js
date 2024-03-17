@@ -95,10 +95,6 @@ exports.getInquiryReceiverUsers = async function (req, res) {
   try {
     const clientFilter = req.clientFilter;
 
-    // const inquiry = await Inquiry.findOne({ _id: req.params.inquiryId })
-    //   .select("-title -desc -sender -receiverUsers.replies")
-    //   .populate("receiverUsers.user", "-password");
-
     const [inquiry] = await Inquiry.aggregate([
       {
         $match: {
@@ -242,7 +238,7 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
           replies: 1,
         },
       },
-    ]);
+    ]).limit(1);
 
     if (!receiverUser) {
       throw new Error("Replies for this user not found.");

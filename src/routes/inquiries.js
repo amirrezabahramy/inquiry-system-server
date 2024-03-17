@@ -17,14 +17,7 @@ router
   .get(
     authByRoles("admin", "user"),
     setUser,
-    applyClientFilter(
-      "title",
-      "desc",
-      "segmentName",
-      "price",
-      "count",
-      "deliveryPlace"
-    ),
+    applyClientFilter("title", "desc", "segmentName", "deliveryPlace"),
     getInquiries
   );
 
