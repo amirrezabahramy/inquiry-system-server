@@ -128,44 +128,48 @@ exports.getInquiryReceiverUsers = async function (req, res) {
           },
         },
       },
-      {
-        $project: {
-          receiverUsers: {
-            $filter: {
-              input: "$receiverUsers",
-              as: "receiverUser",
-              cond: {
-                $or: [
-                  {
-                    $regexMatch: {
-                      input: "$$receiverUser.user.firstName",
-                      regex: req.query.search,
+      ...(req.query.search
+        ? [
+            {
+              $project: {
+                receiverUsers: {
+                  $filter: {
+                    input: "$receiverUsers",
+                    as: "receiverUser",
+                    cond: {
+                      $or: [
+                        {
+                          $regexMatch: {
+                            input: "$$receiverUser.user.firstName",
+                            regex: req.query.search,
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: "$$receiverUser.user.lastName",
+                            regex: req.query.search,
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: "$$receiverUser.user.username",
+                            regex: req.query.search,
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: "$$receiverUser.user.email",
+                            regex: req.query.search,
+                          },
+                        },
+                      ],
                     },
                   },
-                  {
-                    $regexMatch: {
-                      input: "$$receiverUser.user.lastName",
-                      regex: req.query.search,
-                    },
-                  },
-                  {
-                    $regexMatch: {
-                      input: "$$receiverUser.user.username",
-                      regex: req.query.search,
-                    },
-                  },
-                  {
-                    $regexMatch: {
-                      input: "$$receiverUser.user.email",
-                      regex: req.query.search,
-                    },
-                  },
-                ],
+                },
               },
             },
-          },
-        },
-      },
+          ]
+        : []),
       {
         $project: {
           receiverUsers: {
@@ -286,13 +290,17 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
               cond: {
                 $and: [
                   { $ne: ["$$reply", {}] },
-                  {
-                    $regexMatch: {
-                      // Filter
-                      input: "$$reply.message",
-                      regex: req.query.search,
-                    },
-                  },
+                  ...(req.query.search
+                    ? [
+                        {
+                          $regexMatch: {
+                            // Filter
+                            input: "$$reply.message",
+                            regex: req.query.search,
+                          },
+                        },
+                      ]
+                    : []),
                 ],
               },
             },
