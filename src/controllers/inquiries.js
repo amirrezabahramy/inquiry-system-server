@@ -139,6 +139,7 @@ exports.getInquiryReceiverUsers = async function (req, res) {
       },
       {
         $project: {
+          "receiverUsers.user._id": 1,
           "receiverUsers.user.firstName": 1,
           "receiverUsers.user.lastName": 1,
           "receiverUsers.user.username": 1,
