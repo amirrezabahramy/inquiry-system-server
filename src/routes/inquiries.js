@@ -41,11 +41,21 @@ router
 
 router
   .route("/:inquiryId/receiver-users/:receiverUserId/replies")
-  .get(authByRoles("admin"), setUser, getInquiryReceiverUserReplies);
+  .get(
+    authByRoles("admin"),
+    setUser,
+    applyClientFilter("receiverUsers.replies.message"),
+    getInquiryReceiverUserReplies
+  );
 
 router
   .route("/:inquiryId/replies")
-  .get(authByRoles("user"), setUser, getInquiryReceiverUserReplies);
+  .get(
+    authByRoles("user"),
+    setUser,
+    applyClientFilter("receiverUsers.replies.message"),
+    getInquiryReceiverUserReplies
+  );
 
 router.route("/enquiry").post(authByRoles("admin"), setUser, enquiry);
 
