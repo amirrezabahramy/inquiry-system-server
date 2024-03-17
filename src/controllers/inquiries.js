@@ -17,7 +17,7 @@ exports.getInquiries = async function (req, res) {
       inquiries = await Inquiry.find({
         ...clientFilter,
         sender: user._id,
-      }).select("-receiverUsers -sender");
+      }).select("-receiverUsers -sender -updatedAt");
     } else {
       inquiries = await Inquiry.aggregate([
         {
@@ -94,7 +94,6 @@ exports.getInquiries = async function (req, res) {
 exports.getInquiryReceiverUsers = async function (req, res) {
   try {
     const clientFilter = req.clientFilter;
-    console.log(clientFilter);
 
     // const inquiry = await Inquiry.findOne({ _id: req.params.inquiryId })
     //   .select("-title -desc -sender -receiverUsers.replies")
@@ -140,13 +139,16 @@ exports.getInquiryReceiverUsers = async function (req, res) {
       },
       {
         $project: {
-          "receiverUsers.replies": 0,
-          "receiverUsers.user.password": 0,
+          "receiverUsers.user.firstName": 1,
+          "receiverUsers.user.lastName": 1,
+          "receiverUsers.user.username": 1,
+          "receiverUsers.user.email": 1,
+          "receiverUsers.contractStatus": 1,
+          "receiverUsers.senderAnswer": 1,
+          "receiverUsers.receiverUserAnswer": 1,
         },
       },
     ]).limit(1);
-
-    console.log(inquiry);
 
     if (!inquiry) {
       throw new Error("Inquiry not found.");
@@ -163,13 +165,15 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
   try {
     const user = req.user;
 
+    const clientFilter = req.clientFilter;
+
     let receiverUserId = user._id;
 
     if (user.role === "admin") {
       receiverUserId = req.params.receiverUserId;
     }
 
-    const [inquiry] = await Inquiry.aggregate([
+    const [receiverUser] = await Inquiry.aggregate([
       {
         $match: {
           _id: mongoose.Types.ObjectId.createFromHexString(
@@ -177,7 +181,9 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
           ),
         },
       },
-      { $unwind: "$receiverUsers" },
+      {
+        $unwind: "$receiverUsers",
+      },
       {
         $match: {
           "receiverUsers.user":
@@ -185,23 +191,61 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
         },
       },
       {
+        $unwind: "$receiverUsers.replies",
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { fromId: "$receiverUsers.replies.from" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$fromId"] },
+              },
+            },
+            {
+              $project: {
+                firstName: 1,
+                lastName: 1,
+              },
+            },
+          ],
+          as: "receiverUsers.replies.from",
+        },
+      },
+      {
+        $unwind: "$receiverUsers.replies.from",
+      },
+      {
+        $match: clientFilter,
+      },
+      {
         $group: {
-          _id: "$_id",
-          title: { $first: "$title" },
-          desc: { $first: "$desc" },
-          sender: { $first: "$sender" },
-          createdAt: { $first: "$createdAt" },
-          updatedAt: { $first: "$updatedAt" },
-          receiverUsers: { $push: "$receiverUsers" },
+          _id: {
+            _id: "$_id",
+            receiverUser: "$receiverUsers.user",
+          },
+          senderAnswer: { $first: "$receiverUsers.senderAnswer" },
+          receiverUserAnswer: {
+            $first: "$receiverUsers.receiverUserAnswer",
+          },
+          replies: { $push: "$receiverUsers.replies" },
+        },
+      },
+      {
+        $project: {
+          _id: "$_id._id",
+          receiverUser: "$_id.receiverUser",
+          senderAnswer: 1,
+          receiverUserAnswer: 1,
+          replies: 1,
         },
       },
     ]);
 
-    if (!inquiry) {
-      throw new Error("Inquiry not found.");
+    if (!receiverUser) {
+      throw new Error("Replies for this user not found.");
     }
-
-    const receiverUser = inquiry.receiverUsers[0];
 
     let replyStatus = {
       value: true,
