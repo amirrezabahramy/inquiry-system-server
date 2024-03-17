@@ -8,6 +8,7 @@ const {
 
 const { authByRoles } = require("../middlewares/auth");
 const { setUser, applyClientFilter } = require("../middlewares/basic");
+const { canViewInquiry } = require("../middlewares/permissions");
 
 const router = require("express").Router();
 
@@ -31,6 +32,7 @@ router
   .route("/:inquiryId/receiver-users")
   .get(
     authByRoles("admin"),
+    canViewInquiry,
     applyClientFilter(
       "receiverUsers.user.firstName",
       "receiverUsers.user.lastName",
@@ -43,6 +45,7 @@ router
   .route("/:inquiryId/receiver-users/:receiverUserId/replies")
   .get(
     authByRoles("admin"),
+    canViewInquiry,
     setUser,
     applyClientFilter("receiverUsers.replies.message"),
     getInquiryReceiverUserReplies
