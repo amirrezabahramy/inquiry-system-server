@@ -21,18 +21,16 @@ router
     getInquiries
   );
 
-router
-  .route("/:inquiryId/receiver-users")
-  .get(
-    authByRoles("admin"),
-    canViewInquiry,
-    applyClientFilter(
-      "receiverUsers.user.firstName",
-      "receiverUsers.user.lastName",
-      "receiverUsers.user.username"
-    ),
-    getInquiryReceiverUsers
-  );
+router.route("/:inquiryId/receiver-users").get(
+  authByRoles("admin"),
+  canViewInquiry,
+  // applyClientFilter(
+  //   "receiverUsers.user.firstName",
+  //   "receiverUsers.user.lastName",
+  //   "receiverUsers.user.username"
+  // ) // Client filter is applied manually for this route.
+  getInquiryReceiverUsers
+);
 
 router.route("/:inquiryId/receiver-users/:receiverUserId/replies").get(
   authByRoles("admin"),
@@ -42,14 +40,12 @@ router.route("/:inquiryId/receiver-users/:receiverUserId/replies").get(
   getInquiryReceiverUserReplies
 );
 
-router
-  .route("/:inquiryId/replies")
-  .get(
-    authByRoles("user"),
-    setUser,
-    applyClientFilter("receiverUsers.replies.message"),
-    getInquiryReceiverUserReplies
-  );
+router.route("/:inquiryId/replies").get(
+  authByRoles("user"),
+  setUser,
+  // applyClientFilter("receiverUsers.replies.message"), // Client filter is applied manually for this route.
+  getInquiryReceiverUserReplies
+);
 
 router.route("/enquiry").post(authByRoles("admin"), setUser, enquiry);
 

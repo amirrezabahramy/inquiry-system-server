@@ -93,8 +93,6 @@ exports.getInquiries = async function (req, res) {
 /** @type {import("express").RequestHandler} */
 exports.getInquiryReceiverUsers = async function (req, res) {
   try {
-    const clientFilter = req.clientFilter;
-
     const [inquiry] = await Inquiry.aggregate([
       {
         $match: {
@@ -118,9 +116,6 @@ exports.getInquiryReceiverUsers = async function (req, res) {
         $unwind: "$receiverUsers.user",
       },
       {
-        $match: clientFilter,
-      },
-      {
         $group: {
           _id: "$_id",
           receiverUsers: { $push: "$receiverUsers" },
@@ -135,14 +130,62 @@ exports.getInquiryReceiverUsers = async function (req, res) {
       },
       {
         $project: {
-          "receiverUsers.user._id": 1,
-          "receiverUsers.user.firstName": 1,
-          "receiverUsers.user.lastName": 1,
-          "receiverUsers.user.username": 1,
-          "receiverUsers.user.email": 1,
-          "receiverUsers.contractStatus": 1,
-          "receiverUsers.senderAnswer": 1,
-          "receiverUsers.receiverUserAnswer": 1,
+          receiverUsers: {
+            $filter: {
+              input: "$receiverUsers",
+              as: "receiverUser",
+              cond: {
+                $or: [
+                  {
+                    $regexMatch: {
+                      input: "$$receiverUser.user.firstName",
+                      regex: req.query.search,
+                    },
+                  },
+                  {
+                    $regexMatch: {
+                      input: "$$receiverUser.user.lastName",
+                      regex: req.query.search,
+                    },
+                  },
+                  {
+                    $regexMatch: {
+                      input: "$$receiverUser.user.username",
+                      regex: req.query.search,
+                    },
+                  },
+                  {
+                    $regexMatch: {
+                      input: "$$receiverUser.user.email",
+                      regex: req.query.search,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          receiverUsers: {
+            $map: {
+              input: "$receiverUsers",
+              as: "receiverUser",
+              in: {
+                user: {
+                  _id: "$$receiverUser.user._id",
+                  firstName: "$$receiverUser.user.firstName",
+                  lastName: "$$receiverUser.user.lastName",
+                  username: "$$receiverUser.user.username",
+                  email: "$$receiverUser.user.email",
+                },
+                contractStatus: "$$receiverUser.contractStatus",
+                senderAnswer: "$$receiverUser.senderAnswer",
+                receiverUserAnswer: "$$receiverUser.receiverUserAnswer",
+              },
+            },
+          },
         },
       },
     ]).limit(1);
