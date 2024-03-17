@@ -23,10 +23,13 @@ const schema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      minLength: 4,
     },
     password: {
       type: String,
       required: true,
+      minLength: 8,
+      maxLength: 32,
     },
     role: {
       type: String,

@@ -5,10 +5,12 @@ const schema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      minLength: 4,
     },
     desc: {
       type: String,
       required: true,
+      minLength: 10,
     },
     segmentName: {
       type: String,
