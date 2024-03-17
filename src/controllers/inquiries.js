@@ -162,8 +162,6 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
   try {
     const user = req.user;
 
-    const clientFilter = req.clientFilter;
-
     let receiverUserId = user._id;
 
     if (user.role === "admin") {
@@ -188,7 +186,10 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
         },
       },
       {
-        $unwind: "$receiverUsers.replies",
+        $unwind: {
+          path: "$receiverUsers.replies",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $lookup: {
@@ -211,10 +212,10 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
         },
       },
       {
-        $unwind: "$receiverUsers.replies.from",
-      },
-      {
-        $match: clientFilter,
+        $unwind: {
+          path: "$receiverUsers.replies.from",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $group: {
@@ -235,7 +236,24 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
           receiverUser: "$_id.receiverUser",
           senderAnswer: 1,
           receiverUserAnswer: 1,
-          replies: 1,
+          replies: {
+            $filter: {
+              input: "$replies",
+              as: "reply",
+              cond: {
+                $and: [
+                  { $ne: ["$$reply", {}] },
+                  {
+                    $regexMatch: {
+                      // Filter
+                      input: "$$reply.message",
+                      regex: req.query.search,
+                    },
+                  },
+                ],
+              },
+            },
+          },
         },
       },
     ]).limit(1);

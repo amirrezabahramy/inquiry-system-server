@@ -34,15 +34,13 @@ router
     getInquiryReceiverUsers
   );
 
-router
-  .route("/:inquiryId/receiver-users/:receiverUserId/replies")
-  .get(
-    authByRoles("admin"),
-    canViewInquiry,
-    setUser,
-    applyClientFilter("receiverUsers.replies.message"),
-    getInquiryReceiverUserReplies
-  );
+router.route("/:inquiryId/receiver-users/:receiverUserId/replies").get(
+  authByRoles("admin"),
+  canViewInquiry,
+  setUser,
+  // applyClientFilter("receiverUsers.replies.message"), // Client filter is applied manually for this route.
+  getInquiryReceiverUserReplies
+);
 
 router
   .route("/:inquiryId/replies")
