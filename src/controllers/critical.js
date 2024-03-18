@@ -1,3 +1,5 @@
+const { StatusCodes } = require("http-status-codes");
+
 const User = require("../models/User");
 
 /** @type {import("express").RequestHandler} */
