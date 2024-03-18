@@ -1,11 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const { logger } = require("./src/middlewares/basic");
 
 const app = express();
 
 // Middlewares
 app.use(require("cors")());
 app.use(express.json());
+app.use(logger);
 
 // Routes
 app.use("/api/v1", require("./src/routes"));
