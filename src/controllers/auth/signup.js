@@ -1,8 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const User = require("../../models/User");
 
-const { hash: hashService } = require("../../services/hash");
-
 /** @type {import("express").RequestHandler} */
 exports.signup = async function (req, res) {
   try {
@@ -13,7 +11,7 @@ exports.signup = async function (req, res) {
       lastName,
       email,
       username,
-      password: await hashService(password),
+      password,
       role: "user",
     });
 

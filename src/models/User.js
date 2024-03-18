@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { hash } = require("../services/hash");
+
 const schema = new mongoose.Schema(
   {
     firstName: {
@@ -28,8 +30,6 @@ const schema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minLength: 8,
-      maxLength: 32,
     },
     role: {
       type: String,
@@ -38,6 +38,18 @@ const schema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+schema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    if (this.password.length < 8 || this.password.length > 32) {
+      throw new Error(
+        "Password must be a string with maximum 8 and minimum 32 characters."
+      );
+    }
+    this.password = await hash(this.password);
+  }
+  next();
+});
 
 const model = mongoose.model("User", schema);
 
