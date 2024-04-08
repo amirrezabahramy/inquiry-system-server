@@ -5,7 +5,7 @@ const { logger } = require("./src/middlewares/basic");
 const app = express();
 
 // Middlewares
-app.use(require("cors")());
+app.use(require("cors")({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
 app.use(logger);
 
