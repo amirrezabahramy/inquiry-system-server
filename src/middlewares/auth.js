@@ -4,7 +4,7 @@ const { verifyToken } = require("../services/auth");
 /** @type {import("express").RequestHandler} */
 exports.authByRoles = function (...roles) {
   return function (req, res, next) {
-    const token = req.headers["authorization"]?.split(" ")[1] || "";
+    const token = req.headers["Authorization"]?.split(" ")[1] || "";
 
     if (!token) {
       return res.status(StatusCodes.UNAUTHORIZED).send("Token not found.");
