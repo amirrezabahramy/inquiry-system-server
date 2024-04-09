@@ -16,7 +16,7 @@ app.use(
   require("cors")({
     origin: process.env.CORS_ORIGIN,
     credentials: true,
-    allowedHeaders: ["Authorization", "Content-Type"],
+    allowedHeaders: ["authorization", "Content-Type"],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     optionsSuccessStatus: require("http-status-codes").StatusCodes.OK,
   })

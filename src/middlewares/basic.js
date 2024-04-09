@@ -1,12 +1,10 @@
 const { decodeToken } = require("../services/auth");
 
-const { APP_PORT, APP_HOSTNAME } = process.env;
-
 /** @type {import("express").RequestHandler} */
 exports.logger = function (req, res, next) {
   console.log(
     `FROM LOGGER - Url: ${req.protocol}://${require("path").join(
-      `${APP_HOSTNAME}:${APP_PORT}`,
+      `${process.env.APP_HOSTNAME}:${process.env.APP_PORT}`,
       req.url
     )}, Method: ${req.method}, At: ${new Date().toLocaleString(
       "fa-IR-u-nu-latn"
@@ -17,7 +15,7 @@ exports.logger = function (req, res, next) {
 
 /** @type {import("express").RequestHandler} */
 exports.setUser = function (req, res, next) {
-  const token = req.headers["Authorization"].split(" ")[1];
+  const token = req.headers["authorization"].split(" ")[1];
   const user = decodeToken(token);
   req.user = user;
   next();

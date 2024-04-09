@@ -6,7 +6,7 @@ const Inquiry = require("../models/Inquiry");
 /** @type {import('express').RequestHandler} */
 exports.canViewInquiry = async function (req, res, next) {
   try {
-    const token = req.headers["Authorization"].split(" ")[1];
+    const token = req.headers["authorization"].split(" ")[1];
     const user = decodeToken(token);
 
     const inquiry = await Inquiry.findById(req.params.inquiryId);
