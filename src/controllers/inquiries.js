@@ -420,7 +420,7 @@ exports.answerInquiry = async function (req, res) {
   try {
     const { replyMessage, answer } = req.body;
 
-    const token = req.headers["authorization"].split(" ")[1];
+    const token = req.headers["Authorization"].split(" ")[1];
     const user = decodeToken(token);
 
     const inquiry = await Inquiry.findById(req.params.inquiryId);
