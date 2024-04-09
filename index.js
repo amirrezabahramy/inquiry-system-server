@@ -1,8 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const { StatusCodes } = require("http-status-codes");
 const { logger } = require("./src/middlewares/basic");
 
+// Dotenv config
+require("dotenv").config({
+  path: require("node:path").join(__dirname, `./.env.${process.env.NODE_ENV}`),
+});
+
+// App
 const app = express();
 
 // Middlewares
@@ -12,7 +17,7 @@ app.use(
     credentials: true,
     allowedHeaders: ["Authorization", "Content-Type"],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    optionsSuccessStatus: StatusCodes.OK,
+    optionsSuccessStatus: require("http-status-codes").StatusCodes.OK,
   })
 );
 app.use(express.json());
@@ -20,9 +25,6 @@ app.use(logger);
 
 // Routes
 app.use("/api/v1", require("./src/routes"));
-
-// Dotenv config
-require("dotenv").config();
 
 // DB Start
 const { MONGODB_URI } = process.env;
