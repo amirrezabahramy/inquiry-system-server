@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const { logger } = require("./src/middlewares/basic");
+const { rateLimit } = require("express-rate-limit");
 
 // Dotenv config
 require("dotenv").config({
@@ -18,6 +19,14 @@ app.use(
     allowedHeaders: ["Authorization", "Content-Type"],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     optionsSuccessStatus: require("http-status-codes").StatusCodes.OK,
+  })
+);
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
   })
 );
 app.use(express.json());
