@@ -369,6 +369,8 @@ exports.enquiry = async function (req, res) {
       title,
       desc,
       segmentName,
+      pic,
+      doc,
       price,
       count,
       producer,
@@ -385,21 +387,27 @@ exports.enquiry = async function (req, res) {
       role: "user",
     }).select("_id");
 
-    const inquiry = new Inquiry({
-      title,
-      desc,
-      segmentName,
-      price,
-      count,
-      producer,
-      deliveryDate,
-      deliveryPlace,
-      from,
-      sender: user,
-      receiverUsers: users.map((user) => ({
-        user: user._id,
-      })),
-    });
+    const inquiry = new Inquiry(
+      Object.assign(
+        {
+          title,
+          desc,
+          segmentName,
+          price,
+          count,
+          producer,
+          deliveryDate,
+          deliveryPlace,
+          from,
+          sender: user,
+          receiverUsers: users.map((user) => ({
+            user: user._id,
+          })),
+        },
+        !!pic ? { pic } : undefined,
+        !!doc ? { doc } : undefined
+      )
+    );
 
     if (receiverUsersIds.includes(user._id)) {
       throw new Error("You can't enquiry to yourself.");
