@@ -2,8 +2,17 @@ const { decodeToken } = require("../services/auth");
 
 /** @type {import("express").RequestHandler} */
 exports.logger = function (req, res, next) {
+  const token = req.headers["authorization"]?.split(" ")[1];
+
+  let user;
+  if (token) {
+    user = decodeToken(token);
+  }
+
   console.log(
-    `FROM LOGGER - Url: ${req.protocol}://${require("path").join(
+    `FROM LOGGER - ${user ? `${user.username} (${user.role}) - ` : ""}Ip: ${
+      req.ip
+    }, Url: ${req.protocol}://${require("path").join(
       `${process.env.APP_HOSTNAME}:${process.env.APP_PORT}`,
       req.url
     )}, Method: ${req.method}, At: ${new Date().toLocaleString(
