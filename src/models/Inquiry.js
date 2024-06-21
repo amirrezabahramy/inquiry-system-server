@@ -1,4 +1,9 @@
 const mongoose = require("mongoose");
+const { validateBase64File } = require("../utils/helpers");
+const {
+  acceptedPicFormats,
+  acceptedDocFormats,
+} = require("../utils/constants");
 
 const schema = new mongoose.Schema(
   {
@@ -17,6 +22,22 @@ const schema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    // File
+    pic: {
+      type: String,
+      validate: {
+        validator: validateBase64File(acceptedPicFormats),
+        message: "Pic is invalid.",
+      },
+    },
+    doc: {
+      type: String,
+      validate: {
+        validator: validateBase64File(acceptedDocFormats),
+        message: "Doc is invalid.",
+      },
+    },
+    // End of file
     price: {
       type: Number,
       required: true,
@@ -84,6 +105,20 @@ const schema = new mongoose.Schema(
               message: {
                 type: String,
                 required: true,
+              },
+              pic: {
+                type: String,
+                validate: {
+                  validator: validateBase64File(acceptedPicFormats),
+                  message: "Pic is invalid.",
+                },
+              },
+              doc: {
+                type: String,
+                validate: {
+                  validator: validateBase64File(acceptedDocFormats),
+                  message: "Doc is invalid.",
+                },
               },
               createdAt: {
                 type: Date,
