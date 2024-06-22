@@ -14,18 +14,47 @@ exports.getInquiries = async function (req, res) {
     let inquiries;
 
     if (user.role === "admin") {
-      inquiries = await Inquiry.find({
-        ...clientFilter,
-        sender: user._id,
-      }).select("-receiverUsers -sender -updatedAt");
+      inquiries = await Inquiry.aggregate([
+        {
+          $match: {
+            ...clientFilter,
+            sender: new mongoose.Types.ObjectId(user._id),
+          },
+        },
+        {
+          $addFields: {
+            hasPic: {
+              $cond: {
+                if: { $ifNull: ["$pic", false] },
+                then: true,
+                else: false,
+              },
+            },
+            hasDoc: {
+              $cond: {
+                if: { $ifNull: ["$doc", false] },
+                then: true,
+                else: false,
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            receiverUsers: 0,
+            sender: 0,
+            updatedAt: 0,
+            pic: 0,
+            doc: 0,
+          },
+        },
+      ]);
     } else {
       inquiries = await Inquiry.aggregate([
         {
           $match: {
             ...clientFilter,
-            "receiverUsers.user": mongoose.Types.ObjectId.createFromHexString(
-              user._id
-            ),
+            "receiverUsers.user": new mongoose.Types.ObjectId(user._id),
           },
         },
         {
@@ -37,7 +66,7 @@ exports.getInquiries = async function (req, res) {
                 cond: {
                   $eq: [
                     "$$receiverUser.user",
-                    mongoose.Types.ObjectId.createFromHexString(user._id),
+                    new mongoose.Types.ObjectId(user._id),
                   ],
                 },
               },
@@ -69,8 +98,20 @@ exports.getInquiries = async function (req, res) {
             segmentName: 1,
             price: 1,
             count: 1,
-            pic: 1,
-            doc: 1,
+            hasPic: {
+              $cond: {
+                if: { $ifNull: ["$pic", false] },
+                then: true,
+                else: false,
+              },
+            },
+            hasDoc: {
+              $cond: {
+                if: { $ifNull: ["$doc", false] },
+                then: true,
+                else: false,
+              },
+            },
             deliveryDate: 1,
             deliveryPlace: 1,
             uniqueId: 1,
@@ -98,9 +139,7 @@ exports.getInquiryReceiverUsers = async function (req, res) {
     const [inquiry] = await Inquiry.aggregate([
       {
         $match: {
-          _id: mongoose.Types.ObjectId.createFromHexString(
-            req.params.inquiryId
-          ),
+          _id: new mongoose.Types.ObjectId(req.params.inquiryId),
         },
       },
       {
@@ -220,9 +259,7 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
     const [receiverUser] = await Inquiry.aggregate([
       {
         $match: {
-          _id: mongoose.Types.ObjectId.createFromHexString(
-            req.params.inquiryId
-          ),
+          _id: new mongoose.Types.ObjectId(req.params.inquiryId),
         },
       },
       {
@@ -230,8 +267,7 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
       },
       {
         $match: {
-          "receiverUsers.user":
-            mongoose.Types.ObjectId.createFromHexString(receiverUserId),
+          "receiverUsers.user": new mongoose.Types.ObjectId(receiverUserId),
         },
       },
       {
@@ -286,24 +322,48 @@ exports.getInquiryReceiverUserReplies = async function (req, res) {
           senderAnswer: 1,
           receiverUserAnswer: 1,
           replies: {
-            $filter: {
-              input: "$replies",
+            $map: {
+              input: {
+                $filter: {
+                  input: "$replies",
+                  as: "reply",
+                  cond: {
+                    $and: [
+                      { $ne: ["$$reply", {}] },
+                      ...(req.query.search
+                        ? [
+                            {
+                              $regexMatch: {
+                                input: "$$reply.message",
+                                regex: req.query.search,
+                              },
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                },
+              },
               as: "reply",
-              cond: {
-                $and: [
-                  { $ne: ["$$reply", {}] },
-                  ...(req.query.search
-                    ? [
-                        {
-                          $regexMatch: {
-                            // Filter
-                            input: "$$reply.message",
-                            regex: req.query.search,
-                          },
-                        },
-                      ]
-                    : []),
-                ],
+              in: {
+                _id: "$$reply._id",
+                from: "$$reply.from",
+                message: "$$reply.message",
+                createdAt: "$$reply.createdAt",
+                hasPic: {
+                  $cond: {
+                    if: { $ifNull: ["$$reply.pic", false] },
+                    then: true,
+                    else: false,
+                  },
+                },
+                hasDoc: {
+                  $cond: {
+                    if: { $ifNull: ["$$reply.doc", false] },
+                    then: true,
+                    else: false,
+                  },
+                },
               },
             },
           },
