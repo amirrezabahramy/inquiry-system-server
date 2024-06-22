@@ -1,4 +1,4 @@
-exports.validateBase64File = function (acceptedFormats, limitSize = 5) {
+exports.validateBase64File = function (acceptedFormats, limitSizeMB = 2.5) {
   return async function (value = "") {
     try {
       const { fileTypeFromBuffer } = await import("file-type");
@@ -13,10 +13,10 @@ exports.validateBase64File = function (acceptedFormats, limitSize = 5) {
         return false;
       }
       const fileSizeInMB = binaryContent.length / (1024 * 1024);
-      if (fileSizeInMB > limitSize) {
+      if (fileSizeInMB > limitSizeMB) {
         return false;
       }
-      await fileTypeFromBuffer(binaryContent);
+      const fileTypeResult = await fileTypeFromBuffer(binaryContent);
       return (
         fileTypeResult &&
         fileTypeResult.ext &&
