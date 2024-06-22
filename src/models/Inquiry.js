@@ -5,6 +5,64 @@ const {
   acceptedDocFormats,
 } = require("../utils/constants");
 
+const replySchema = new mongoose.Schema({
+  from: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  pic: {
+    type: String,
+    validate: {
+      validator: validateBase64File(acceptedPicFormats),
+      message: "Pic is invalid.",
+    },
+  },
+  doc: {
+    type: String,
+    validate: {
+      validator: validateBase64File(acceptedDocFormats),
+      message: "Doc is invalid.",
+    },
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    immutable: true,
+  },
+});
+
+// Receiver user schema
+const receiverUserSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  receiverUserAnswer: {
+    type: String,
+    default: "not-answered",
+    required: true,
+    enum: ["accepted", "rejected", "additional-info-required", "not-answered"],
+  },
+  senderAnswer: {
+    type: String,
+    required: true,
+    default: "offer-in-progress",
+    enum: ["accepted", "rejected", "offer-in-progress"],
+  },
+  contractStatus: {
+    type: String,
+    enum: ["successful", "unsuccessful", "in-progress"],
+  },
+  replies: [replySchema],
+});
+
+// Main schema
 const schema = new mongoose.Schema(
   {
     title: {
@@ -67,68 +125,7 @@ const schema = new mongoose.Schema(
       ref: "User",
     },
     receiverUsers: {
-      type: [
-        {
-          user: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: "User",
-          },
-          receiverUserAnswer: {
-            type: String,
-            default: "not-answered",
-            required: true,
-            enum: [
-              "accepted",
-              "rejected",
-              "additional-info-required",
-              "not-answered",
-            ],
-          },
-          senderAnswer: {
-            type: String,
-            required: true,
-            default: "offer-in-progress",
-            enum: ["accepted", "rejected", "offer-in-progress"],
-          },
-          contractStatus: {
-            type: String,
-            enum: ["successful", "unsuccessful", "in-progress"],
-          },
-          replies: [
-            {
-              from: {
-                type: mongoose.Schema.Types.ObjectId,
-                required: true,
-                ref: "User",
-              },
-              message: {
-                type: String,
-                required: true,
-              },
-              pic: {
-                type: String,
-                validate: {
-                  validator: validateBase64File(acceptedPicFormats),
-                  message: "Pic is invalid.",
-                },
-              },
-              doc: {
-                type: String,
-                validate: {
-                  validator: validateBase64File(acceptedDocFormats),
-                  message: "Doc is invalid.",
-                },
-              },
-              createdAt: {
-                type: Date,
-                default: Date.now,
-                immutable: true,
-              },
-            },
-          ],
-        },
-      ],
+      type: [receiverUserSchema],
       validate: function (value) {
         return Array.isArray(value) && value.length > 0;
       },
