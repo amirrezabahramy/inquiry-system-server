@@ -29,7 +29,7 @@ app.use(
     legacyHeaders: false,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "5.1mb" }));
 app.use(logger);
 
 // Routes
