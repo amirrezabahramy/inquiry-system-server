@@ -69,6 +69,8 @@ exports.getInquiries = async function (req, res) {
             segmentName: 1,
             price: 1,
             count: 1,
+            pic: 1,
+            doc: 1,
             deliveryDate: 1,
             deliveryPlace: 1,
             uniqueId: 1,
