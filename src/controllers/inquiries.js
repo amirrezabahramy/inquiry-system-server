@@ -426,7 +426,7 @@ exports.enquiry = async function (req, res) {
 /** @type {import("express").RequestHandler} */
 exports.answerInquiry = async function (req, res) {
   try {
-    const { replyMessage, answer } = req.body;
+    const { replyMessage, pic, doc, answer } = req.body;
 
     const token = req.headers["authorization"].split(" ")[1];
     const user = decodeToken(token);
@@ -501,10 +501,16 @@ exports.answerInquiry = async function (req, res) {
 
     receiverUser[answerToChange] = answer;
     if (replyMessage) {
-      receiverUser.replies.push({
-        from: user._id,
-        message: replyMessage,
-      });
+      receiverUser.replies.push(
+        Object.assign(
+          {
+            from: user._id,
+            message: replyMessage,
+          },
+          !!pic ? { pic } : undefined,
+          !!doc ? { doc } : undefined
+        )
+      );
     }
 
     await inquiry.save();
