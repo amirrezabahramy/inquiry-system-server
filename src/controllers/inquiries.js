@@ -40,6 +40,11 @@ exports.getInquiries = async function (req, res) {
           },
         },
         {
+          $sort: {
+            _id: -1,
+          },
+        },
+        {
           $project: {
             receiverUsers: 0,
             sender: 0,
@@ -89,6 +94,11 @@ exports.getInquiries = async function (req, res) {
         {
           $addFields: {
             sender: { $arrayElemAt: ["$sender", 0] },
+          },
+        },
+        {
+          $sort: {
+            _id: -1,
           },
         },
         {
